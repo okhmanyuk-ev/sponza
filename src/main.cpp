@@ -6,6 +6,7 @@
 #include "../sky/lib/skygfx/examples/utils/utils.h"
 #include "../sky/lib/skygfx/examples/utils/imgui_helper.h"
 #include <imgui_impl_glfw.h>
+#include <sky/sky.h>
 
 static double cursor_saved_pos_x = 0.0;
 static double cursor_saved_pos_y = 0.0;
@@ -17,24 +18,26 @@ bool IsImguiInteracting()
 		&& !ImGui::IsAnyItemActive());
 }
 
-void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+void MouseButtonCallback(const Platform::Input::Mouse::ButtonEvent& e)
 {
-	if (button == GLFW_MOUSE_BUTTON_LEFT)
+	if (e.button == Platform::Input::Mouse::Button::Left)
 	{
-		if (action == GLFW_PRESS && !cursor_is_interacting)
+		if (e.type == Platform::Input::Mouse::ButtonEvent::Type::Pressed && !cursor_is_interacting)
 		{
 			if (IsImguiInteracting())
 				return;
 
 			cursor_is_interacting = true;
-			glfwGetCursorPos(window, &cursor_saved_pos_x, &cursor_saved_pos_y);
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+			auto pos = PLATFORM->getCursorPos().value();
+			cursor_saved_pos_x = (double)pos.x;
+			cursor_saved_pos_y = (double)pos.y;
+			PLATFORM->setCursorMode(Platform::Input::CursorMode::Hidden);
 		}
-		else if (action == GLFW_RELEASE && cursor_is_interacting)
+		else if (e.type == Platform::Input::Mouse::ButtonEvent::Type::Released && cursor_is_interacting)
 		{
 			cursor_is_interacting = false;
-			glfwSetCursorPos(window, cursor_saved_pos_x, cursor_saved_pos_y);
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			PLATFORM->setCursorPos((int)cursor_saved_pos_x, (int)cursor_saved_pos_y);
+			PLATFORM->setCursorMode(Platform::Input::CursorMode::Normal);
 		}
 	}
 }
@@ -42,18 +45,18 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 static auto gTechnique = skygfx::utils::DrawSceneOptions::Technique::DeferredShading;
 static auto gNormalMapping = true;
 
-void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void KeyCallback(const Platform::Input::Keyboard::Event& e)
 {
-	if (action != GLFW_PRESS && action != GLFW_REPEAT)
+	if (e.type != Platform::Input::Keyboard::Event::Type::Pressed && e.type != Platform::Input::Keyboard::Event::Type::Repeat)
 		return;
 
-	if (key == GLFW_KEY_1)
+	if (e.key == Platform::Input::Keyboard::Key::R)
 	{
 		gTechnique = gTechnique == skygfx::utils::DrawSceneOptions::Technique::ForwardShading ?
 			skygfx::utils::DrawSceneOptions::Technique::DeferredShading :
 			skygfx::utils::DrawSceneOptions::Technique::ForwardShading;
 	}
-	else if (key == GLFW_KEY_2)
+	else if (e.key == Platform::Input::Keyboard::Key::T)
 	{
 		gNormalMapping = !gNormalMapping;
 	}
@@ -251,17 +254,14 @@ RenderBuffer BuildRenderBuffer(const tinygltf::Model& model)
 	return result;
 }
 
-void UpdateCamera(GLFWwindow* window, skygfx::utils::PerspectiveCamera& camera)
+void UpdateCamera(skygfx::utils::PerspectiveCamera& camera)
 {
 	if (cursor_is_interacting)
 	{
-		double x = 0.0;
-		double y = 0.0;
+		auto pos = PLATFORM->getCursorPos().value();
 
-		glfwGetCursorPos(window, &x, &y);
-
-		auto dx = x - cursor_saved_pos_x;
-		auto dy = y - cursor_saved_pos_y;
+		auto dx = (double)pos.x - cursor_saved_pos_x;
+		auto dy = (double)pos.y - cursor_saved_pos_y;
 
 		const auto sensitivity = 0.25f;
 
@@ -271,7 +271,7 @@ void UpdateCamera(GLFWwindow* window, skygfx::utils::PerspectiveCamera& camera)
 		camera.yaw += glm::radians(static_cast<float>(dx));
 		camera.pitch -= glm::radians(static_cast<float>(dy));
 
-		glfwSetCursorPos(window, cursor_saved_pos_x, cursor_saved_pos_y);
+		PLATFORM->setCursorPos((int)cursor_saved_pos_x, (int)cursor_saved_pos_y);
 	}
 
 	static auto before = glfwGetTime();
@@ -281,24 +281,24 @@ void UpdateCamera(GLFWwindow* window, skygfx::utils::PerspectiveCamera& camera)
 
 	auto speed = (float)dtime * 500.0f;
 
-	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+	if (PLATFORM->isKeyPressed(Platform::Input::Keyboard::Key::LeftShift))
 		speed *= 3.0f;
 
-	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+	if (PLATFORM->isKeyPressed(Platform::Input::Keyboard::Key::LeftCtrl))
 		speed /= 6.0f;
 
 	glm::vec2 direction = { 0.0f, 0.0f };
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+	if (PLATFORM->isKeyPressed(Platform::Input::Keyboard::Key::W))
 		direction.y = 1.0f;
 
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+	if (PLATFORM->isKeyPressed(Platform::Input::Keyboard::Key::S))
 		direction.y = -1.0f;
 
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+	if (PLATFORM->isKeyPressed(Platform::Input::Keyboard::Key::A))
 		direction.x = -1.0f;
 
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	if (PLATFORM->isKeyPressed(Platform::Input::Keyboard::Key::D))
 		direction.x = 1.0f;
 
 	if (glm::length(direction) > 0.0f)
@@ -309,16 +309,16 @@ void UpdateCamera(GLFWwindow* window, skygfx::utils::PerspectiveCamera& camera)
 
 	auto angles_speed = dtime * 100.0f;
 
-	if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	if (PLATFORM->isKeyPressed(Platform::Input::Keyboard::Key::Right))
 		camera.yaw += glm::radians(static_cast<float>(angles_speed));
 
-	if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+	if (PLATFORM->isKeyPressed(Platform::Input::Keyboard::Key::Left))
 		camera.yaw -= glm::radians(static_cast<float>(angles_speed));
 
-	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	if (PLATFORM->isKeyPressed(Platform::Input::Keyboard::Key::Up))
 		camera.pitch += glm::radians(static_cast<float>(angles_speed));
 
-	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	if (PLATFORM->isKeyPressed(Platform::Input::Keyboard::Key::Down))
 		camera.pitch -= glm::radians(static_cast<float>(angles_speed));
 
 	constexpr auto limit = glm::pi<float>() / 2.0f - 0.01f;
@@ -540,169 +540,143 @@ void DrawNormals(const skygfx::utils::PerspectiveCamera& camera, const RenderBuf
 	});
 }
 
-int main()
+void sky_main()
 {
-	auto backend_type = utils::ChooseBackendTypeViaConsole();
+	sky::Locator<sky::Application>::Init("sponza");
 
-	glfwInit();
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	auto mouseEventListener = sky::Listener<Platform::Input::Mouse::ButtonEvent>(MouseButtonCallback);
+	auto keyboardEventListener = sky::Listener<Platform::Input::Keyboard::Event>(KeyCallback);
 
-	auto [window, native_window, width, height] = utils::SpawnWindow(800, 600, "Sponza");
+	sky::RunTask([] -> sky::Task<> {
+		tinygltf::Model model;
+		tinygltf::TinyGLTF loader;
+		std::string err;
+		std::string warn;
+		auto path = "assets/sponza/sponza.glb";
 
-	skygfx::Initialize(native_window, width, height, backend_type);
+		bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, path);
 
-	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
-		skygfx::Resize(static_cast<uint32_t>(width), static_cast<uint32_t>(height));
-	});
+		auto camera = skygfx::utils::PerspectiveCamera();
 
-	glfwSetMouseButtonCallback(window, MouseButtonCallback);
-	glfwSetKeyCallback(window, KeyCallback);
+		auto render_buffer = BuildRenderBuffer(model);
 
-	tinygltf::Model model;
-	tinygltf::TinyGLTF loader;
-	std::string err;
-	std::string warn;
-	auto path = "assets/sponza/sponza.glb";
+		auto directional_light = skygfx::utils::DirectionalLight();
+		directional_light.ambient = { 0.125f, 0.125f, 0.125f };
+		directional_light.diffuse = { 0.125f, 0.125f, 0.125f };
+		directional_light.specular = { 1.0f, 1.0f, 1.0f };
+		directional_light.shininess = 16.0f;
+		directional_light.direction = { 0.5f, -1.0f, 0.5f };
 
-	bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, path);
+		auto base_light = skygfx::utils::PointLight();
+		base_light.shininess = 32.0f;
+		base_light.constant_attenuation = 0.0f;
+		base_light.linear_attenuation = 0.00128f;
+		base_light.quadratic_attenuation = 0.0f;
 
-	auto camera = skygfx::utils::PerspectiveCamera();
+		auto red_light = base_light;
+		red_light.ambient = { 0.0625f, 0.0f, 0.0f };
+		red_light.diffuse = { 0.5f, 0.0f, 0.0f };
+		red_light.specular = { 1.0f, 0.0f, 0.0f };
 
-	auto render_buffer = BuildRenderBuffer(model);
+		auto green_light = base_light;
+		green_light.ambient = { 0.0f, 0.0625f, 0.0f };
+		green_light.diffuse = { 0.0f, 0.5f, 0.0f };
+		green_light.specular = { 0.0f, 1.0f, 0.0f };
 
-	auto directional_light = skygfx::utils::DirectionalLight();
-	directional_light.ambient = { 0.125f, 0.125f, 0.125f };
-	directional_light.diffuse = { 0.125f, 0.125f, 0.125f };
-	directional_light.specular = { 1.0f, 1.0f, 1.0f };
-	directional_light.shininess = 16.0f;
-	directional_light.direction = { 0.5f, -1.0f, 0.5f };
+		auto blue_light = base_light;
+		blue_light.ambient = { 0.0f, 0.0f, 0.0625f };
+		blue_light.diffuse = { 0.0f, 0.0f, 0.5f };
+		blue_light.specular = { 0.0f, 0.0f, 1.0f };
 
-	auto base_light = skygfx::utils::PointLight();
-	base_light.shininess = 32.0f;
-	base_light.constant_attenuation = 0.0f;
-	base_light.linear_attenuation = 0.00128f;
-	base_light.quadratic_attenuation = 0.0f;
+		auto lightblue_light = base_light;
+		lightblue_light.ambient = { 0.0f, 0.0625f, 0.0625f };
+		lightblue_light.diffuse = { 0.0f, 0.5f, 0.5f };
+		lightblue_light.specular = { 0.0f, 1.0f, 1.0f };
 
-	auto red_light = base_light;
-	red_light.ambient = { 0.0625f, 0.0f, 0.0f };
-	red_light.diffuse = { 0.5f, 0.0f, 0.0f };
-	red_light.specular = { 1.0f, 0.0f, 0.0f };
-
-	auto green_light = base_light;
-	green_light.ambient = { 0.0f, 0.0625f, 0.0f };
-	green_light.diffuse = { 0.0f, 0.5f, 0.0f };
-	green_light.specular = { 0.0f, 1.0f, 0.0f };
-
-	auto blue_light = base_light;
-	blue_light.ambient = { 0.0f, 0.0f, 0.0625f };
-	blue_light.diffuse = { 0.0f, 0.0f, 0.5f };
-	blue_light.specular = { 0.0f, 0.0f, 1.0f };
-
-	auto lightblue_light = base_light;
-	lightblue_light.ambient = { 0.0f, 0.0625f, 0.0625f };
-	lightblue_light.diffuse = { 0.0f, 0.5f, 0.5f };
-	lightblue_light.specular = { 0.0f, 1.0f, 1.0f };
-
-	struct MovingLight
-	{
-		skygfx::utils::PointLight light;
-		glm::vec3 begin;
-		glm::vec3 end;
-		float multiplier = 1.0f;
-	};
-
-	std::vector<MovingLight> moving_lights = {
-		// first floor
-		{ red_light, { 1200.0f, 256.0f, -36.0f }, { -1200.0f, 256.0f, -36.0f }, 4.0f },
-		{ green_light, { 1200.0f, 256.0f, -36.0f }, { -1200.0f, 256.0f, -36.0f }, 3.0f },
-		{ blue_light, { 1200.0f, 256.0f, -36.0f }, { -1200.0f, 256.0f, -36.0f }, 2.0f },
-
-		// second floor
-		{ green_light, { 1100.0f, 550.0f, 400.0f }, { 1100.0f, 550.0f, -400.0f }, 1.0f },
-		{ red_light, { -1200.0f, 550.0f, -400.0f }, { -1200.0f, 550.0f, 400.0f }, 2.0f },
-		{ blue_light, { 1100.0f, 550.0f, 400.0f }, { -1200.0f, 550.0f, 400.0f }, 3.0f },
-		{ lightblue_light, { 1100.0f, 550.0f, -400.0f }, { -1200.0f, 550.0f, -400.0f }, 4.0f }
-	};
-
-	auto imgui = ImguiHelper();
-
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-
-	std::vector<skygfx::utils::Model> models;
-
-	for (const auto& [material, draw_datas] : render_buffer.meshes)
-	{
-		for (const auto& draw_data: draw_datas)
+		struct MovingLight
 		{
-			skygfx::utils::Model model;
-			model.mesh = (skygfx::utils::Mesh*)&draw_data.mesh;
-			model.draw_command = draw_data.draw_command;
-			model.color = material->color;
-			model.color_texture = material->color_texture.get();
-			model.normal_texture = material->normal_texture.get();
-			model.cull_mode = skygfx::CullMode::Front;
-			model.texture_address = skygfx::TextureAddress::Wrap;
-			model.depth_mode = skygfx::ComparisonFunc::LessEqual;
-			models.push_back(model);
-		}
-	}
+			skygfx::utils::PointLight light;
+			glm::vec3 begin;
+			glm::vec3 end;
+			float multiplier = 1.0f;
+		};
 
-	skygfx::utils::DrawSceneOptions options = {
-		.posteffects = {
-			skygfx::utils::DrawSceneOptions::BloomPosteffect{}
-		}
-	};
+		std::vector<MovingLight> moving_lights = {
+			// first floor
+			{ red_light, { 1200.0f, 256.0f, -36.0f }, { -1200.0f, 256.0f, -36.0f }, 4.0f },
+			{ green_light, { 1200.0f, 256.0f, -36.0f }, { -1200.0f, 256.0f, -36.0f }, 3.0f },
+			{ blue_light, { 1200.0f, 256.0f, -36.0f }, { -1200.0f, 256.0f, -36.0f }, 2.0f },
 
-	bool animate_lights = true;
-	bool show_normals = false;
-	float time = 0.0f;
+			// second floor
+			{ green_light, { 1100.0f, 550.0f, 400.0f }, { 1100.0f, 550.0f, -400.0f }, 1.0f },
+			{ red_light, { -1200.0f, 550.0f, -400.0f }, { -1200.0f, 550.0f, 400.0f }, 2.0f },
+			{ blue_light, { 1100.0f, 550.0f, 400.0f }, { -1200.0f, 550.0f, 400.0f }, 3.0f },
+			{ lightblue_light, { 1100.0f, 550.0f, -400.0f }, { -1200.0f, 550.0f, -400.0f }, 4.0f }
+		};
 
-	StageViewer stage_viewer;
-	skygfx::utils::SetStageViewer(&stage_viewer);
+		std::vector<skygfx::utils::Model> models;
 
-	while (!glfwWindowShouldClose(window))
-	{
-		ImGui_ImplGlfw_NewFrame();
-
-		ImGui::NewFrame();
-
-		DrawGui(camera, options, animate_lights, show_normals);
-
-		options.technique = gTechnique;
-		options.use_normal_textures = gNormalMapping;
-
-		UpdateCamera(window, camera);
-
-		if (animate_lights)
-			time = (float)glfwGetTime();
-
-		std::vector<skygfx::utils::Light> lights = { directional_light };
-
-		for (auto& moving_light : moving_lights)
+		for (const auto& [material, draw_datas] : render_buffer.meshes)
 		{
-			moving_light.light.position = glm::lerp(moving_light.begin, moving_light.end, (glm::sin(time / moving_light.multiplier) + 1.0f) * 0.5f);
-			lights.push_back(moving_light.light);
+			for (const auto& draw_data : draw_datas)
+			{
+				skygfx::utils::Model model;
+				model.mesh = (skygfx::utils::Mesh*)&draw_data.mesh;
+				model.draw_command = draw_data.draw_command;
+				model.color = material->color;
+				model.color_texture = material->color_texture.get();
+				model.normal_texture = material->normal_texture.get();
+				model.cull_mode = skygfx::CullMode::Front;
+				model.texture_address = skygfx::TextureAddress::Wrap;
+				model.depth_mode = skygfx::ComparisonFunc::LessEqual;
+				models.push_back(model);
+			}
 		}
 
-		skygfx::utils::DrawScene(nullptr, camera, models, lights, options);
+		skygfx::utils::DrawSceneOptions options = {
+			.posteffects = {
+				skygfx::utils::DrawSceneOptions::BloomPosteffect{}
+			}
+		};
 
-		if (show_normals)
-			DrawNormals(camera, render_buffer);
+		bool animate_lights = true;
+		bool show_normals = false;
+		float time = 0.0f;
 
-		stage_viewer.show();
-		imgui.draw();
+		StageViewer stage_viewer;
+		skygfx::utils::SetStageViewer(&stage_viewer);
 
-		auto present_result = skygfx::Present();
-		gDrawcalls = present_result.drawcalls;
+		while (true)
+		{
+			DrawGui(camera, options, animate_lights, show_normals);
 
-		glfwPollEvents();
-	}
+			options.technique = gTechnique;
+			options.use_normal_textures = gNormalMapping;
 
-	ImGui_ImplGlfw_Shutdown();
+			UpdateCamera(camera);
 
-	skygfx::Finalize();
+			if (animate_lights)
+				time = (float)glfwGetTime();
 
-	glfwTerminate();
+			std::vector<skygfx::utils::Light> lights = { directional_light };
 
-	return 0;
+			for (auto& moving_light : moving_lights)
+			{
+				moving_light.light.position = glm::lerp(moving_light.begin, moving_light.end, (glm::sin(time / moving_light.multiplier) + 1.0f) * 0.5f);
+				lights.push_back(moving_light.light);
+			}
+
+			skygfx::utils::DrawScene(nullptr, camera, models, lights, options);
+
+			if (show_normals)
+				DrawNormals(camera, render_buffer);
+
+		//	stage_viewer.show();
+
+			co_await sky::Tasks::NextFrame();
+		}
+	}());
+
+	sky::Locator<sky::Application>::Get()->run();
+	sky::Locator<sky::Application>::Reset();
 }
