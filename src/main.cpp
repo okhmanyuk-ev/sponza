@@ -3,9 +3,7 @@
 #include <tiny_gltf.h>
 #include <imgui.h>
 #include <skygfx/utils.h>
-#include "../sky/lib/skygfx/examples/utils/utils.h"
 #include "../sky/lib/skygfx/examples/utils/imgui_helper.h"
-#include <imgui_impl_glfw.h>
 #include <sky/sky.h>
 
 static double cursor_saved_pos_x = 0.0;
@@ -274,12 +272,12 @@ void UpdateCamera(skygfx::utils::PerspectiveCamera& camera)
 		PLATFORM->setCursorPos((int)cursor_saved_pos_x, (int)cursor_saved_pos_y);
 	}
 
-	static auto before = glfwGetTime();
-	auto now = glfwGetTime();
-	auto dtime = now - before;
+	static auto before = sky::Now();
+	auto now = sky::Now();
+	auto dtime = sky::ToSeconds(now - before);
 	before = now;
 
-	auto speed = (float)dtime * 500.0f;
+	auto speed = dtime * 500.0f;
 
 	if (PLATFORM->isKeyPressed(Platform::Input::Keyboard::Key::LeftShift))
 		speed *= 3.0f;
@@ -409,12 +407,12 @@ void DrawGui(skygfx::utils::PerspectiveCamera& camera,
 
 	static int fps = 0;
 	static int frame_count = 0;
-	static double before = 0.0;
+	static auto before = sky::Now();
 
-	double now = glfwGetTime();
+	auto now = sky::Now();
 	frame_count++;
 
-	if (now - before >= 1.0)
+	if (sky::ToSeconds(now - before) >= 1.0)
 	{
 		fps = frame_count;
 		frame_count = 0;
@@ -641,7 +639,8 @@ void sky_main()
 
 		bool animate_lights = true;
 		bool show_normals = false;
-		float time = 0.0f;
+		auto before = sky::Now();
+		auto time = sky::Now() - before;
 
 		StageViewer stage_viewer;
 		skygfx::utils::SetStageViewer(&stage_viewer);
@@ -656,13 +655,13 @@ void sky_main()
 			UpdateCamera(camera);
 
 			if (animate_lights)
-				time = (float)glfwGetTime();
+				time = sky::Now() - before;
 
 			std::vector<skygfx::utils::Light> lights = { directional_light };
 
 			for (auto& moving_light : moving_lights)
 			{
-				moving_light.light.position = glm::lerp(moving_light.begin, moving_light.end, (glm::sin(time / moving_light.multiplier) + 1.0f) * 0.5f);
+				moving_light.light.position = glm::lerp(moving_light.begin, moving_light.end, (glm::sin(sky::ToSeconds(time) / moving_light.multiplier) + 1.0f) * 0.5f);
 				lights.push_back(moving_light.light);
 			}
 
