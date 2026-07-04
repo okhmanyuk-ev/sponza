@@ -1,3 +1,6 @@
 [submodule "lib/skygfx"]
 	path = lib/skygfx
 	url = git@github.com:okhmanyuk-ev/skygfx.git
+[submodule "scripts"]
+	path = scripts
+	url = git@github.com:okhmanyuk-ev/scripts.git
