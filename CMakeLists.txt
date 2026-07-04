@@ -27,22 +27,15 @@ set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY $
 set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE ${RESOURCES})
 add_definitions(-DNOMINMAX)
 
-# skygfx
+# sky
 
-add_subdirectory(lib/skygfx)
-set_property(TARGET skygfx PROPERTY FOLDER ${LIBS_FOLDER})
-target_link_libraries(${PROJECT_NAME} skygfx)
+add_subdirectory(sky)
+target_link_libraries(${PROJECT_NAME} sky)
+copy_required_libs(${PROJECT_NAME})
 
-# glfw
+# imgui
 
-if(NOT TARGET glfw)
-	set(GLFW_INSTALL OFF)
-	set(GLFW_BUILD_DOCS OFF)
-	add_subdirectory(lib/skygfx/examples/lib/glfw)
-	set_property(TARGET glfw PROPERTY FOLDER ${LIBS_FOLDER}/glfw)
-	set_property(TARGET update_mappings PROPERTY FOLDER ${LIBS_FOLDER}/glfw)
-	target_link_libraries(${PROJECT_NAME} glfw)
-endif()
+target_link_libraries(${PROJECT_NAME} imgui_helper)
 
 # tinygltf
 
@@ -52,7 +45,3 @@ set(TINYGLTF_BUILD_LOADER_EXAMPLE OFF CACHE INTERNAL "" FORCE)
 add_subdirectory(lib/tinygltf)
 target_link_libraries(${PROJECT_NAME} tinygltf)
 set_property(TARGET tinygltf PROPERTY FOLDER ${LIBS_FOLDER})
-
-# imgui
-
-target_link_libraries(${PROJECT_NAME} imgui_helper)

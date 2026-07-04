@@ -3,8 +3,8 @@
 #include <tiny_gltf.h>
 #include <imgui.h>
 #include <skygfx/utils.h>
-#include "../lib/skygfx/examples/utils/utils.h"
-#include "../lib/skygfx/examples/utils/imgui_helper.h"
+#include "../sky/lib/skygfx/examples/utils/utils.h"
+#include "../sky/lib/skygfx/examples/utils/imgui_helper.h"
 #include <imgui_impl_glfw.h>
 
 static double cursor_saved_pos_x = 0.0;
