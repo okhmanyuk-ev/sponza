@@ -3,7 +3,6 @@
 #include <tiny_gltf.h>
 #include <imgui.h>
 #include <skygfx/utils.h>
-#include "../sky/lib/skygfx/examples/utils/imgui_helper.h"
 #include <sky/sky.h>
 
 static double cursor_saved_pos_x = 0.0;
@@ -642,9 +641,6 @@ void sky_main()
 		auto before = sky::Now();
 		auto time = sky::Now() - before;
 
-		StageViewer stage_viewer;
-		skygfx::utils::SetStageViewer(&stage_viewer);
-
 		while (true)
 		{
 			DrawGui(camera, options, animate_lights, show_normals);
@@ -669,8 +665,6 @@ void sky_main()
 
 			if (show_normals)
 				DrawNormals(camera, render_buffer);
-
-		//	stage_viewer.show();
 
 			co_await sky::Tasks::NextFrame();
 		}

@@ -33,10 +33,6 @@ add_subdirectory(sky)
 target_link_libraries(${PROJECT_NAME} sky)
 copy_required_libs(${PROJECT_NAME})
 
-# imgui
-
-target_link_libraries(${PROJECT_NAME} imgui_helper)
-
 # tinygltf
 
 set(TINYGLTF_HEADER_ONLY OFF CACHE INTERNAL "" FORCE)
