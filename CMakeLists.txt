@@ -38,12 +38,14 @@ target_link_libraries(${PROJECT_NAME} skygfx)
 
 # glfw
 
-set(GLFW_INSTALL OFF)
-set(GLFW_BUILD_DOCS OFF)
-add_subdirectory(lib/skygfx/examples/lib/glfw)
-set_property(TARGET glfw PROPERTY FOLDER ${LIBS_FOLDER}/glfw)
-set_property(TARGET update_mappings PROPERTY FOLDER ${LIBS_FOLDER}/glfw)
-target_link_libraries(${PROJECT_NAME} glfw)
+if(NOT TARGET glfw)
+	set(GLFW_INSTALL OFF)
+	set(GLFW_BUILD_DOCS OFF)
+	add_subdirectory(lib/skygfx/examples/lib/glfw)
+	set_property(TARGET glfw PROPERTY FOLDER ${LIBS_FOLDER}/glfw)
+	set_property(TARGET update_mappings PROPERTY FOLDER ${LIBS_FOLDER}/glfw)
+	target_link_libraries(${PROJECT_NAME} glfw)
+endif()
 
 # tinygltf
 
@@ -56,14 +58,16 @@ set_property(TARGET tinygltf PROPERTY FOLDER ${LIBS_FOLDER})
 
 # imgui
 
-file(GLOB IMGUI_SRC 
-	lib/skygfx/examples/lib/imgui/*.cpp 
-	lib/skygfx/examples/lib/imgui/*.h
-)
-target_include_directories(${PROJECT_NAME} PUBLIC
-	lib/skygfx/examples/lib/imgui
-	lib/skygfx/examples/lib/imgui/backends
-)
-add_library(imgui STATIC ${IMGUI_SRC})
-target_link_libraries(${PROJECT_NAME} imgui)
-set_property(TARGET imgui PROPERTY FOLDER ${LIBS_FOLDER})
+if(NOT TARGET imgui)
+	file(GLOB IMGUI_SRC 
+		lib/skygfx/examples/lib/imgui/*.cpp 
+		lib/skygfx/examples/lib/imgui/*.h
+	)
+	target_include_directories(${PROJECT_NAME} PUBLIC
+		lib/skygfx/examples/lib/imgui
+		lib/skygfx/examples/lib/imgui/backends
+	)
+	add_library(imgui STATIC ${IMGUI_SRC})
+	target_link_libraries(${PROJECT_NAME} imgui)
+	set_property(TARGET imgui PROPERTY FOLDER ${LIBS_FOLDER})
+endif()
