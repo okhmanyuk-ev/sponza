@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(skygfx-sponza-demo)
+project(sponza)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,12 +14,9 @@ set(RESOURCES
 
 set(LIBS_FOLDER "libs")
 
-file(GLOB ALL_SRC 
+file(GLOB ALL_SRC
 	src/*.cpp
 	src/*.h
-	lib/skygfx/examples/utils/*.cpp
-	lib/skygfx/examples/utils/*.h
-	lib/skygfx/examples/lib/imgui/backends/imgui_impl_glfw.cpp
 	${RESOURCES}
 )
 
@@ -29,7 +26,7 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT $
 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 set_target_properties(${PROJECT_NAME} PROPERTIES RESOURCE ${RESOURCES})
 add_definitions(-DNOMINMAX)
-	
+
 # skygfx
 
 add_subdirectory(lib/skygfx)
@@ -58,16 +55,4 @@ set_property(TARGET tinygltf PROPERTY FOLDER ${LIBS_FOLDER})
 
 # imgui
 
-if(NOT TARGET imgui)
-	file(GLOB IMGUI_SRC 
-		lib/skygfx/examples/lib/imgui/*.cpp 
-		lib/skygfx/examples/lib/imgui/*.h
-	)
-	target_include_directories(${PROJECT_NAME} PUBLIC
-		lib/skygfx/examples/lib/imgui
-		lib/skygfx/examples/lib/imgui/backends
-	)
-	add_library(imgui STATIC ${IMGUI_SRC})
-	target_link_libraries(${PROJECT_NAME} imgui)
-	set_property(TARGET imgui PROPERTY FOLDER ${LIBS_FOLDER})
-endif()
+target_link_libraries(${PROJECT_NAME} imgui_helper)
