@@ -28,7 +28,7 @@ void MouseButtonCallback(const Platform::Input::Mouse::ButtonEvent& e)
 			auto pos = PLATFORM->getCursorPos().value();
 			cursor_saved_pos_x = (double)pos.x;
 			cursor_saved_pos_y = (double)pos.y;
-			PLATFORM->setCursorMode(Platform::Input::CursorMode::Hidden);
+			PLATFORM->setCursorMode(Platform::Input::CursorMode::Locked);
 		}
 		else if (e.type == Platform::Input::Mouse::ButtonEvent::Type::Released && cursor_is_interacting)
 		{
